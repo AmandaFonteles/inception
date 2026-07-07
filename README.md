@@ -10,3 +10,4 @@ The image is read-only and shared. Multiple containers can run from the same ima
 
 NOTES:
 - how do you get a genuine named volume to store its data at a host path you picked, when picking the path is normally the bind-mount behaviour? I think I need to choose the path but let the Docker create and manage the persistent data, even if I chose the path and it's in my machine?
+- but the place to look is the options you can pass to a named volume's local driver. A named volume isn't as rigid as "Docker always picks /var/lib/docker." The local driver accepts parameters. Research question for you: what parameters does the local volume driver accept, and is there a combination that lets a named volume back onto an arbitrary host directory — while still being declared and managed as a named volume, not a bind mount?
