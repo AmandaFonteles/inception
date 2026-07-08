@@ -6,6 +6,8 @@
 The image is read-only and shared. Multiple containers can run from the same image simultaneously, each getting its own writable layer on top. So picture one frozen base + N thin writable layers, one per container. Deleting a container removes only its writable layer; the image underneath is untouched.
 - Volumes: are persistent data stores for containers, created and managed by Docker. When you create a volume, it's stored within a directory on the Docker host. When you mount the volume into a container, this directory is what's mounted into the container. This is similar to the way that bind mounts work, except that volumes are managed by Docker and are isolated from the core functionality of the host machine.
 - Bind mount: When you use a bind mount, a file or directory on the host machine is mounted from the host into a container. By contrast, when you use a volume, a new directory is created within Docker's storage directory on the host machine.
+- Service: A service is an abstract definition of a computing resource within an application which can be scaled or replaced independently from other components. Services are backed by a set of containers, run by the platform according to replication requirements and placement constraints. As services are backed by containers, they are defined by a Docker image and set of runtime arguments. All containers within a service are identically created with these arguments.
+- Docker daemon: is the background service that manages containers, images, volumes and networks. It's the brain of docker
 
 
 NOTES:
@@ -16,3 +18,7 @@ NOTES:
 - The named-volume-to-host-path resolution, in one breath: I declare a named volume in the volumes: section using the default local driver, and pass driver_opts — type: none, device: /home/afontele/data/..., o: bind — so the local driver binds my chosen host directory. It's a genuine managed named volume (visible in docker volume ls, its own lifecycle), and the bind is only the driver's mechanism for reaching the path the subject mandates. It is not a forbidden inline bind mount because that's a different object model entirely.
 - One caveat to flag for when you actually implement it: /home/afontele/data (and the subdirectories for each volume) has to exist on the host before you up, because the bind can't point at nothing. Where might you create those directories so it happens automatically every time? Hold that question for the Makefile phase — it's a natural fit there.
 
+* DAEMON *
+- daemonizes: it does a little dance where the process you launched forks a background copy, hands the real work to that background copy, and then the original process you started exits.
+- daemon is: a process that detaches from your terminal and runs in the background, leaving you your shell back.
+- In a container, the service must run in the foreground as PID 1, so that the container's lifecycle is tied to the service actually running — not to a decoy process. Like taht, if the service crashes, PID 1 wakes up and the container learns about the crash and can restart.
