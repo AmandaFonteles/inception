@@ -22,3 +22,18 @@ NOTES:
 - daemonizes: it does a little dance where the process you launched forks a background copy, hands the real work to that background copy, and then the original process you started exits.
 - daemon is: a process that detaches from your terminal and runs in the background, leaving you your shell back.
 - In a container, the service must run in the foreground as PID 1, so that the container's lifecycle is tied to the service actually running — not to a decoy process. Like taht, if the service crashes, PID 1 wakes up and the container learns about the crash and can restart.
+
+
+* NGINX *
+- NGINX is is a web server: a program that listens on a network port, receives HTTP(S) requests, and sends back responses. 
+- For this project, NGINX plays two roles at once:
+	- A TLS terminator — it's the thing that speaks HTTPS to the outside world, holds the certificate, and handles the encryption.
+	- A reverse proxy — it doesn't generate your WordPress pages itself. It receives the request and forwards it to another process, then relays the answer back. (receives requests from users - foward them to PHP-FPM - returns the respose to users)
+- Why use php-fpm?
+	- Whats the difference between html and php?
+		- html: it's a markup language — it's just text that describes the structure of a page (headings, paragraphs, links). The browser reads it and draws the page. It's static: the file sitting on disk is the final answer.
+		- php: is a programming language — it's code that has to be executed to produce output. A .php file on disk is not the answer yet; it's a set of instructions that, when run, generates HTML.
+	- HTML is a static file NGINX can send directly. PHP is code that must be executed, and NGINX has no PHP interpreter, so it forwards the request over FastCGI to php-fpm, which runs the code and returns the generated HTML for NGINX to relay back."
+- how does NGINX know what to forward?
+	- because you told it to, in the config. 
+- KEY: To speak HTTPS, NGINX needs a certificate and a private key. Since login.42.fr isn't a real registered domain, you can't get a certificate from a real authority — you'll generate a self-signed one yourself (the tool for this is OpenSSL). The browser will warn that it's untrusted, and that's expected and fine for this project.
