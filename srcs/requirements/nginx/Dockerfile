@@ -1,34 +1,29 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Dockerfile                                         :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: afontele <afontele@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/07/10 16:28:32 by afontele          #+#    #+#              #
-#    Updated: 2026/07/15 16:57:17 by afontele         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+# nginx Dockerfile
+# Build context: srcs/requirements/nginx
 
 FROM debian:bookworm
 
-# install  nginx
-RUN apt-get update && apt-get install -y nginx
-
-# install OpenSSL
-RUN apt-get install -y OpenSSL
+# install  nginx and openssl
+RUN apt-get update && apt-get install -y nginx openssl \
+	&& rm -rf /var/lib/apt/lists/*
 
 # create a folder for key and certificate
-RUN mkdir -p /etc/nginx/ssl
+# generate the SSL(TSL) certificate (since is local, we can generate key and certificate together)
+# - req -x509: generate a self-signed certificate
+# - nodes: do not encrypt the private key
+# - days 365: set the validity of the certificate to 365 days
+# - newkey rsa:2048: generate a new RSA key with 2048 bits
+# -out: specify the output file for the certificate
+# -keyout: specify the output file for the private key
+# - subj: set the subject of the certificate (C=country, ST=state, L=locality, O=organization, OU=organizational unit, CN=common name, UID=user id)
+RUN mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -out /etc/nginx/ssl/nginxincep.crt -keyout /etc/nginx/ssl/nginxincep.key \
+	-subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=afontele.42.fr/UID=afontele"
 
-# generate the SSL(TSL) certificate (since is local, we can generate key and certificate together (?))
-# recheck this cmd!!!!
-RUN OpenSSL req -x509 -nodes -out /etc/nginx/ssl/nginxincep.ctr -keyout /etc/nginx/ssl/nginxincep.key -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=afontele.42.fr/UID=afontele"
+# copy config to the container (copy from build context to the container filesystem root)
+COPY conf/nginx.conf /etc/nginx/nginx.conf
 
-# copy config to the container (CHECK THE CONFIG PATH BEFORE PUSH)
-COPY  --from=srcs/requirements/nginx/conf /nginx.conf /etc/nginx/
-
-EXPOSE 433
+EXPOSE 443
 
 # setting nginx to run in the foreground
 CMD [ "nginx", "-g", "daemon off;" ]

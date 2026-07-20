@@ -37,3 +37,7 @@ NOTES:
 - how does NGINX know what to forward?
 	- because you told it to, in the config. 
 - KEY: To speak HTTPS, NGINX needs a certificate and a private key. Since login.42.fr isn't a real registered domain, you can't get a certificate from a real authority — you'll generate a self-signed one yourself (the tool for this is OpenSSL). The browser will warn that it's untrusted, and that's expected and fine for this project.
+
+* BUILD CONTEXT *
+- The build context is a host-side directory that Docker packages up and sends to the daemon before the build starts. COPY source paths are resolved relative to that.
+- Buld context is different from: The container's filesystem root is /, and it comes from the base image. COPY destination paths are resolved relative to that.
