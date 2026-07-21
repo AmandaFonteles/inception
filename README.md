@@ -18,6 +18,7 @@ NOTES:
 - The named-volume-to-host-path resolution, in one breath: I declare a named volume in the volumes: section using the default local driver, and pass driver_opts — type: none, device: /home/afontele/data/..., o: bind — so the local driver binds my chosen host directory. It's a genuine managed named volume (visible in docker volume ls, its own lifecycle), and the bind is only the driver's mechanism for reaching the path the subject mandates. It is not a forbidden inline bind mount because that's a different object model entirely.
 - One caveat to flag for when you actually implement it: /home/afontele/data (and the subdirectories for each volume) has to exist on the host before you up, because the bind can't point at nothing. Where might you create those directories so it happens automatically every time? Hold that question for the Makefile phase — it's a natural fit there.
 
+
 * DAEMON *
 - daemonizes: it does a little dance where the process you launched forks a background copy, hands the real work to that background copy, and then the original process you started exits.
 - daemon is: a process that detaches from your terminal and runs in the background, leaving you your shell back.
@@ -37,6 +38,11 @@ NOTES:
 - how does NGINX know what to forward?
 	- because you told it to, in the config. 
 - KEY: To speak HTTPS, NGINX needs a certificate and a private key. Since login.42.fr isn't a real registered domain, you can't get a certificate from a real authority — you'll generate a self-signed one yourself (the tool for this is OpenSSL). The browser will warn that it's untrusted, and that's expected and fine for this project.
+- nginx doesn't run as one program. When it starts, you get:
+	- one master process, running as root
+	- several worker processes, running as www-data
+The master doesn't serve any traffic. It binds the ports, reads the config, and supervises. The workers do all the actual request handling.
+
 
 * BUILD CONTEXT *
 - The build context is a host-side directory that Docker packages up and sends to the daemon before the build starts. COPY source paths are resolved relative to that.
