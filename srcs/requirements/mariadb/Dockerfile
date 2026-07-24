@@ -1,13 +1,9 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Dockerfile                                         :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: afontele <afontele@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/07/15 13:50:01 by afontele          #+#    #+#              #
-#    Updated: 2026/07/15 13:50:04 by afontele         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+# Dockerfile MariaDB (database)
 
-FROM
+FROM debian:bookworm
+
+RUN apt-get update && apt-get install -y mariadb-server
+
+COPY conf/50=server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
+
+# EXPOSE 3306
