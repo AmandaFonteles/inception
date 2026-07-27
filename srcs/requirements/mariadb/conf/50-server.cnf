@@ -24,7 +24,7 @@ datadir                 = /var/lib/mysql
 
 # Instead of skip-networking the default is now to listen only on
 # localhost which is more compatible and is not less secure.
-bind-address            =*
+bind-address            = 0.0.0.0
 
 #
 # * Fine Tuning
@@ -92,8 +92,8 @@ bind-address            =*
 
 # MySQL/MariaDB default is Latin1, but in Debian we rather default to the full
 # utf8 4-byte character set. See also client.cnf
-character-set-server  = utf8mb4
-collation-server      = utf8mb4_general_ci
+# character-set-server  = utf8mb4
+# collation-server      = utf8mb4_general_ci
 
 #
 # * InnoDB
