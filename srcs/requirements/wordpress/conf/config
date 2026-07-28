@@ -1,0 +1,5 @@
+#pegar o arquivo de configuração e modificar:
+
+clear_env = no
+
+listen=wordpress:9000
