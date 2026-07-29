@@ -9,3 +9,4 @@ wp config create --allow-root \
 				--dbhost=mariadb:3306 --path='/var/www/wordpress'
 
 wp core install
+#try to connect to mariadb in a loop til mariadb is ready and wordpress can connect?

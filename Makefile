@@ -6,7 +6,7 @@
 #    By: afontele <afontele@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/07 14:56:42 by afontele          #+#    #+#              #
-#    Updated: 2026/07/10 13:29:00 by afontele         ###   ########.fr        #
+#    Updated: 2026/07/29 20:13:42 by afontele         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -35,3 +35,6 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
+
+
+# FOR THE VOLUMES: mkdir -p /home/afontele/data/mariadb /home/afontele/data/wordpress
