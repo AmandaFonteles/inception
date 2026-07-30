@@ -1,12 +1,27 @@
 #!/bin/bash
 
+
+
+#if [ ! -f /var/www/html/wp-settings.php ]; then
+ #   cp -r /usr/src/wordpress/. /var/www/html/
+#fi
+
+#copy staging → /var/www/html, only if it isn't already populated (think: what single file's existence proves WordPress is already installed there? test for that, not for the directory)
+#fix ownership inside the volume, because a build-time chown never touched it
+#then wp config create --path=/var/www/html, then wp core install --path=…
+#then exec php-fpm in the foreground
+
 sleep 10
  #if wp-config.php doesn't exists
 wp config create --allow-root \
 				--dbname=$MDB_DB \
 				--dbuser=$MDB_USR \
 				--dbpass=$MDB_PSSWRD \
-				--dbhost=mariadb:3306 --path='/var/www/wordpress'
+				--dbhost=mariadb:3306 \
+				--path='/var/www/html' # Debian's conventional web root
 
-wp core install
+wp core install --path='/var/www/html'
+wp user create
+exec php-fpm
 #try to connect to mariadb in a loop til mariadb is ready and wordpress can connect?
+#entrypoint checks whether the volume path is already populated. If empty → copy from staging into it. If populated → leave it alone.

@@ -13,7 +13,8 @@ RUN wget https://wordpress.org/wordpress-6.9.4.tar.gz -P /var/www
 
 RUN cd /var/www && tar -xzf wordpress-6.9.4.tar.gz && rm wordpress-6.9.4.tar.gz
 
-RUN chown -R root:root /var/www/wordpress #or data-www:data-wwww ?
+# Debian's conventional web root: /var/www/html
+RUN chown -R root:root /var/www/html
 
 COPY conf/www.conf /etc/php/8.2/fpm/pool.d/www.conf
 
