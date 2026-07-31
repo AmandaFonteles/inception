@@ -1,14 +1,16 @@
 # Docker Compose file
 
+name: inception
+
 services:
   mariadb:
     # image
     build: ./requirements/mariadb
-    image: mariadb
+    image: mariadb:inception # name:tag
     
     # identity and lifecycle
     container_name: mariadb
-    restart: unless-stopped #keeps my services up on crashes and on VM/daemon reboots, but if I deliberately stop a container it stays stopped
+    restart: unless-stopped # restarts the container on any non-manual exit
     # dependency runs opposite to request flow (so mariadb depends on nothing)
     
     # networking
@@ -29,13 +31,13 @@ services:
   wordpress:
         # image
     build: ./requirements/wordpress
-    image: wordpress
+    image: wordpress:inception # name:tag
     
     # identity and lifecycle
     container_name: wordpress
-    restart: unless-stopped
+    restart: unless-stopped # restarts the container on any non-manual exit
     depends_on:
-      - mariadb
+      - mariadb # waits for the mariadb container to start, not for MariaDB to accept connections (see wordpress:entrypoint.sh)
     
     # networking
     networks:
@@ -56,11 +58,11 @@ services:
   nginx:
     # image
     build: ./requirements/nginx
-    image: nginx
+    image: nginx:inception # name:tag (tag - version of the image)
     
     # identity and lifecycle
     container_name: nginx
-    restart: unless-stopped
+    restart: unless-stopped # restarts the container on any non-manual exit
     depends_on:
       - wordpress # nginx forwards PHP requests to wordpress over FastCGI on port 9000. If php-fpm isn't listening, nginx has nothing to pass to.
     
@@ -72,7 +74,11 @@ services:
     
     # storage
     volumes:
-      - wordpress_vol:/var/www/html # nginx read the files
+      - wordpress_vol:/var/www/html # nginx read the static files (e.g. images, css, js)
+    
+    # configuration and secrets
+    env_file:
+      - .env
 
 networks:
   inception:

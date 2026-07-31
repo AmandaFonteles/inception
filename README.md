@@ -1,3 +1,52 @@
+# followup claude
+Decisions I made til now (1.3):
+I won't use gitignore: I'll upload everything to my git and copy past only the allowed files to the school repoitory when the project is finished!
+The directory tree is more or less done on my VM at school, I won't use gitkeep, I'll check if everything matches after finishing the prokect.
+
+# structure
+inception/
+├── Makefile
+├── README.md
+├── USER_DOC.md
+├── DEV_DOC.md
+├── .gitignore
+├── secrets/
+│   ├── .gitkeep
+│   ├── db_root_password.txt.example
+│   ├── db_password.txt.example
+│   ├── wp_adm_password.txt.example
+│   └── wp_user_password.txt.example
+└── srcs/
+    ├── docker-compose.yml
+    ├── .env                     (gitignored — never committed)
+    ├── .env.example             (committed, placeholder values only)
+    └── requirements/
+        ├── bonus/
+        │   └── .gitkeep
+        ├── tools/
+        │   └── .gitkeep
+        ├── mariadb/
+        │   ├── Dockerfile
+        │   ├── .dockerignore
+        │   ├── conf/
+        │   │   └── 50-server.cnf
+        │   └── tools/
+        │       └── initialization.sh
+        ├── wordpress/
+        │   ├── Dockerfile
+        │   ├── .dockerignore
+        │   ├── conf/
+        │   │   └── www.conf
+        │   └── tools/
+        │       └── initialization.sh
+        └── nginx/
+            ├── Dockerfile
+            ├── .dockerignore
+            ├── conf/
+            │   └── nginx.conf
+            └── tools/
+                └── .gitkeep
+
 # inception
 
 - VM: virtualized hardware. A Virtual Machine is a holr computer. It's a completely separated enviroment with it's kernel.
