@@ -32,35 +32,81 @@ CMD [ "nginx", "-g", "daemon off;" ]
 NGINX.CONF:
 # Configuration file for NGINX (Server)
 
-user www-data; #user the worker processes drop to; master stays root to bind port 443
-worker_processes auto; #one worker per available CPU core
+# Master process starts as root (needed to bind 443, a privileged port),
+# then forks workers that drop to this unprivileged user.
+# srcs/requirements/nginx/conf/nginx.conf
+# Replaces Debian's /etc/nginx/nginx.conf entirely.
+# Deliberately omits `include sites-enabled/*` and `include conf.d/*`:
+# that is what prevents Debian's default port-80 site from ever loading.
 
-events { # nginx don't start without events{}
-	worker_connections 768; # max simultaneous connections per worker process - Debian default (event loop - epoll)
+# Master process starts as root (needed to bind 443, a privileged port),
+# then forks workers that drop to this unprivileged user.
+user www-data;
+
+# One worker per CPU core, decided at startup.
+worker_processes auto;
+
+# Explicit so `nginx -s reload` and the init logic agree on one path.
+pid /run/nginx.pid;
+
+events {
+    # Max simultaneous connections a single worker will hold open.
+    worker_connections 768;
 	# how many connections one worker may hold open. With 4 cores: 4 × 768 ≈ 3072 total.
 }
 
 http {
-	include /etc/nginx/mime.types;
-	default_type application/octet-stream;
+    # Maps file extensions to Content-Type headers. Without it every asset
+    # is served as octet-stream and the browser refuses to apply the CSS,
+    # so WordPress renders as unstyled text.
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
 
-	server {
-	listen 443 ssl;
-	ssl_protocols TLSv1.2 TLSv1.3;
-	ssl_certificate /etc/nginx/ssl/nginxincep.crt;
-	ssl_certificate_key /etc/nginx/ssl/nginxincep.key;
+    # Static files are copied kernel-side, without a round trip through
+    # nginx's userspace buffers.
+    # sendfile on;
 
-	root /var/www/html; # Debian's conventional web root
-	server_name afontele.42.fr;
-	index index.php index.html index.htm;
+    access_log /var/log/nginx/access.log;
+    error_log  /var/log/nginx/error.log;
 
-	location / {
-		try_files $uri $uri/ =404; # try_files $uri $uri/ /index.php?$args;
-	}
+    server {
+        # TLS only. No `listen 80` anywhere in this file.
+        listen 443 ssl;
+        server_name afontele.42.fr;
 
-	location ~ \.php$ {
-		include snippets/fastcgi-php.conf;
-		fastcgi_pass wordpress:9000;
-	}}
+        # Self-signed pair generated at image build time.
+        ssl_certificate     /etc/nginx/ssl/nginxincep.crt;
+        ssl_certificate_key /etc/nginx/ssl/nginxincep.key;
+
+        # Subject requires TLSv1.2 or TLSv1.3 only. Listing exactly these
+        # two disables TLSv1 and TLSv1.1.
+        ssl_protocols TLSv1.2 TLSv1.3;
+
+        # The wordpress_vol mount point. Same path in the wordpress
+        # container, which is what makes SCRIPT_FILENAME below resolve.
+        root  /var/www/html;
+        index index.php;
+
+        location / {
+            # Serve the file if it exists, then the directory, otherwise
+            # hand the request to WordPress's front controller with the
+            # query string preserved. Required for permalinks: no file
+            # named /my-page/ exists on disk.
+            try_files $uri $uri/ /index.php?$args;
+        }
+
+        location ~ \.php$ {
+            # Standard FastCGI parameter list. Does NOT define
+            # SCRIPT_FILENAME - that is the next line's job.
+            include       fastcgi_params;
+
+            # Absolute path of the script, as php-fpm's filesystem sees it.
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+            # `wordpress` is the Compose service name, resolved by Docker's
+            # embedded DNS on the `inception` network. 9000 is the TCP port
+            # from www.conf's `listen = 9000`.
+            fastcgi_pass  wordpress:9000;
+        }
+    }
 }
-

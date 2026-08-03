@@ -1,40 +1,54 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: afontele <afontele@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/07/07 14:56:42 by afontele          #+#    #+#              #
-#    Updated: 2026/07/29 20:13:42 by afontele         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+NAME = inception
+SRCS_DIR = srcs
+SECRET_DIR = secrets
+DATA_DIR = /home/afontele/data
+REQUIREMENTS_DIR = ${addprefix ${SRCS_DIR}/, requirements/}
+MARIA_DB = ${addprefix ${REQUIREMENTS_DIR}, /mariadb/Dockerfile }
+WORDPRESS = ${addprefix ${REQUIREMENTS_DIR}, /wordpress/Dockerfile}
+DATAS = ${addprefix ${DATA_DIR}/, mariadb wordpress}
+NGINX = ${addprefix ${REQUIREMENTS_DIR}, /nginx/Dockerfile}
 
-# EXEMPLE
 
-NAME		= btc
-CXX			= c++
-CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -I.
-SRCS		= main.cpp BitcoinExchange.cpp
-OBJS		= $(SRCS:.cpp=.o)
+COMPOSE_FILE = ${addprefix ${SRCS_DIR}/, docker-compose.yml}
+COMPOSE = docker compose -f ${COMPOSE_FILE}
 
-all: $(NAME)
+RM = rm -rf
 
-$(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
+all: up
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+build:
+	${COMPOSE} build
+
+up:
+	${COMPOSE} up -d --build
+
+down:
+	${COMPOSE} down
+
+start:
+	${COMPOSE} start
+
+stop:
+	${COMPOSE} stop
+
+restart: down up
+
+logs:
+	${COMPOSE} logs
+
+ls:
+	${COMPOSE} ls -a
+
+ps:
+	${COMPOSE} ps -a
 
 clean:
-	rm -f $(OBJS)
+	${COMPOSE} down -v --rmi all
 
 fclean: clean
-	rm -f $(NAME)
+	sudo ${RM} ${DATAS}
+	mkdir -p ${DATAS}
 
 re: fclean all
 
-.PHONY: all clean fclean re
-
-
-# FOR THE VOLUMES: mkdir -p /home/afontele/data/mariadb /home/afontele/data/wordpress
+.PHONY: all clean fclean re up down build stop start ls logs restart ps
