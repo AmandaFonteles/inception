@@ -96,3 +96,5 @@ The master doesn't serve any traffic. It binds the ports, reads the config, and 
 * BUILD CONTEXT *
 - The build context is a host-side directory that Docker packages up and sends to the daemon before the build starts. COPY source paths are resolved relative to that.
 - Buld context is different from: The container's filesystem root is /, and it comes from the base image. COPY destination paths are resolved relative to that.
+
+- php-fpm is a process manager. It doesn't handle one request at a time — it keeps a group of worker processes alive and hands incoming FastCGI requests to whichever one is free. That group is called a pool.

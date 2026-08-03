@@ -1,68 +1,159 @@
-DOCKERFILE: (draft)
-#Dockerfile Wordpress
+DOCKERFILE:
+# Dockerfile Wordpress
+# Build context: srcs/requirements/wordpress
 
 FROM debian:bookworm
 
+# wget            : downloads WordPress and WP-CLI
+# php-fpm         : the FastCGI process manager NGINX forwards .php requests to
+# php-cli         : provides /usr/bin/php — WP-CLI is a PHP script and cannot run without it
+# php-mysql       : the driver PHP uses to talk to MariaDB
+# mariadb-client  : provides mariadb-admin, used by the entrypoint to test if the DB is up
 RUN apt-get update && apt-get install -y wget\
-php\
-php-fpm\
-php-mysql\
+php8.2-fpm\
+php8.2-cli\
+php8.2-mysql\
 mariadb-client\
 && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://wordpress.org/wordpress-6.9.4.tar.gz -P /var/www
+# Download, unpack to staging, delete the archive.
+# -P is where wget saves it, -C is where tar unpacks it.
+RUN wget https://wordpress.org/wordpress-6.9.4.tar.gz -P /tmp\
+	&& tar -xzf /tmp/wordpress-6.9.4.tar.gz -C /var/www\
+	&& rm /tmp/wordpress-6.9.4.tar.gz
 
-RUN cd /var/www && tar -xzf wordpress-6.9.4.tar.gz && rm wordpress-6.9.4.tar.gz
-
-# Debian's conventional web root: /var/www/html
-RUN chown -R root:root /var/www/html
+# Download WP-CLI, make it executable, and move it to a directory in the PATH.
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+RUN chmod +x wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp
 
 COPY conf/www.conf /etc/php/8.2/fpm/pool.d/www.conf
 
-RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-
-RUN chmod +x wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp
-
-COPY initialization.sh /initialization.sh
-
-RUN chmod +x /initialization.sh
+COPY tools/initialization.sh /usr/local/bin/initialization.sh
+RUN chmod +x /usr/local/bin/initialization.sh
 
 EXPOSE 9000
 
-ENTRYPOINT ["/initialization.sh"]
+ENTRYPOINT ["/usr/local/bin/initialization.sh"]
 
-CONFIG: (draft)
-#pegar o arquivo de configuração e modificar:
+WWW.CONF:
+; php-fpm pool configuration.
+; Replaces Debian's default /etc/php/8.2/fpm/pool.d/www.conf
 
-clear_env = no
+;default pool name
+[www]
 
-listen=wordpress:9000
+; user the php-fpm workers will run as
+user = www-data
+group = www-data
 
-INITIALIZATION.SH: (draft)
+; Accept FastCGI connections on TCP port 9000.
+; Equivalent to 0.0.0.0:9000
+listen = 9000
+
+; Process manager. Debian's defaults, unchanged.
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+;Spawn more if idle workers drop below this.
+pm.min_spare_servers = 1
+;Kill idle workers above this.
+pm.max_spare_servers = 3
+
+INITIALIZATION.SH:
+#!/bin/bash
 #!/bin/bash
 
+# The script must put files in place, generate a config that didn't exist
+# at build time (it contains a password that only exists at runtime),
+# install WordPress into the database, and then become php-fpm.
+# Runs as root: it has to write into the volume and
+# chown it, then hands the process over to php-fpm.
 
+# -e  exit on any command failure
+# -u  error on unset variables — catches a missing .env entry immediately
+# -o pipefail  a pipeline fails if any stage fails, not just the last
+set -euo pipefail
 
-#if [ ! -f /var/www/html/wp-settings.php ]; then
- #   cp -r /usr/src/wordpress/. /var/www/html/
-#fi
+# --- Secrets -------------------------------------------------------------
+# Docker mounts each granted secret as a read-only file at
+# /run/secrets/<declared-name>. Never an environment variable.
+DB_PASSWORD="$(cat /run/secrets/db_password)"
+WP_ADMIN_PASSWORD="$(cat /run/secrets/wp_adm_password)"
+WP_USER_PASSWORD="$(cat /run/secrets/wp_user_password)"
 
-#copy staging → /var/www/html, only if it isn't already populated (think: what single file's existence proves WordPress is already installed there? test for that, not for the directory)
-#fix ownership inside the volume, because a build-time chown never touched it
-#then wp config create --path=/var/www/html, then wp core install --path=…
-#then exec php-fpm in the foreground
+# --- WordPress files -----------------------------------------------------
+# /var/www/html is the volume. On first run it is empty, because a volume
+# mounted over an image path hides whatever the image had there. The files
+# were unpacked at build time to /var/www/wordpress, which no volume covers.
+# wp-settings.php is a core file: its absence proves the volume is unpopulated.
+if [ ! -f /var/www/html/wp-settings.php ]; then
+	# The trailing /. copies the *contents* of the directory, dotfiles included.
+	cp -r /var/www/wordpress/. /var/www/html/
+fi
 
-sleep 10
- #if wp-config.php doesn't exists
-wp config create --allow-root \
-				--dbname=$MDB_DB \
-				--dbuser=$MDB_USR \
-				--dbpass=$MDB_PSSWRD \
-				--dbhost=mariadb:3306 \
-				--path='/var/www/html' # Debian's conventional web root
+# --- Wait for MariaDB ----------------------------------------------------
+# depends_on only waits for the container to start, not for mysqld to accept
+# connections. Bounded to 30 attempts: no infinite loop, and if the database
+# is genuinely down this container exits and Docker restarts it.
+DB_READY=0
+for i in $(seq 30); do
+	if mariadb -h mariadb -u "${MYSQL_USER}" -p"${DB_PASSWORD}" -e "SELECT 1;" > /dev/null 2>&1; then
+		DB_READY=1
+		break
+	fi
+	sleep 1
+done
 
-wp core install --path='/var/www/html'
-wp user create
-exec php-fpm
-#try to connect to mariadb in a loop til mariadb is ready and wordpress can connect?
-#entrypoint checks whether the volume path is already populated. If empty → copy from staging into it. If populated → leave it alone.
+if [ "${DB_READY}" -eq 0 ]; then
+	echo "mariadb did not answer after 30 attempts" >&2
+	exit 1
+fi
+
+# --- wp-config.php -------------------------------------------------------
+# Generated here, not at build time, because it contains the database
+# password, which only exists at runtime as a mounted secret.
+if [ ! -f /var/www/html/wp-config.php ]; then
+	wp config create \
+		--path=/var/www/html \
+		--dbname="${MYSQL_DATABASE}" \
+		--dbuser="${MYSQL_USER}" \
+		--dbpass="${DB_PASSWORD}" \
+		--dbhost=mariadb:3306 \
+		--allow-root
+fi
+
+# --- Install WordPress ---------------------------------------------------
+# Guarded on the database, not on a file: the tables live in the mariadb
+# volume, so this can be false even when the files are already in place.
+if ! wp core is-installed --path=/var/www/html --allow-root; then
+	wp core install \
+		--path=/var/www/html \
+		--url="https://${DOMAIN_NAME}" \
+		--title="${WP_TITLE}" \
+		--admin_user="${WP_ADMIN_USER}" \
+		--admin_password="${WP_ADMIN_PASSWORD}" \
+		--admin_email="${WP_ADMIN_EMAIL}" \
+		--skip-email \
+		--allow-root
+
+	# Second, non-administrator user. The subject requires two users in the
+	# database, only one of them the administrator.
+	wp user create "${WP_USER}" "${WP_USER_EMAIL}" \
+		--role=author \
+		--user_pass="${WP_USER_PASSWORD}" \
+		--path=/var/www/html \
+		--allow-root
+fi
+
+# --- Ownership -----------------------------------------------------------
+# Last, so it also covers wp-config.php and anything else wp-cli wrote as
+# root. www-data is the pool user in www.conf; without this, PHP cannot
+# write to the site (no uploads, no plugin installs).
+chown -R www-data:www-data /var/www/html
+
+# --- Hand over -----------------------------------------------------------
+# -F (--nodaemonize) keeps php-fpm in the foreground. Without it php-fpm
+# forks, the parent exits, and the container stops immediately.
+# exec replaces this shell, so php-fpm becomes PID 1 and receives SIGTERM
+# from `docker stop` directly. Foreground, no loop, no background job.
+exec php-fpm8.2 -F
