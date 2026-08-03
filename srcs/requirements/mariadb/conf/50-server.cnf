@@ -12,12 +12,12 @@ datadir         = /var/lib/mysql
 # socket path to connect with mariadb client
 socket          = /run/mysqld/mysqld.sock
 
-# set's the path to the pid files. Without it, every docker up will ccreate a new one
+# sets the path to the pid files. Without it, every docker up will create a new one
 pid-file        = /run/mysqld/mysqld.pid
 
 port            = 3306
 
-# Listen on every interface in this container's network.
+# No published port, so the only clients that can reach 3306 are containers on the `inception` network.
 bind-address    = 0.0.0.0
 
 # Compare hosts as raw IPs only. (Using the user+host records takes more time)
