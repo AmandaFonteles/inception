@@ -102,3 +102,7 @@ The master doesn't serve any traffic. It binds the ports, reads the config, and 
 why the Makefile creates directories at all, when Docker "manages" the volume. Your answer: the subject mandates the data live under /home/afontele/data, and the only way to satisfy that with a named volume is driver_opts with o: bind — which requires the target path to pre-exist. The mkdir -p in the Makefile is what makes make reproducible from a clean clone. That's a genuinely good answer and this failure is the evidence for it.
 
 "the container is disposable; the datadir is a named volume bound to a host path, and the entrypoint's guards detect an already-initialised datadir and skip seeding, so existing data is never touched."
+
+the second user exists because wp core install creates only the administrator. The wp user create call in your entrypoint sits inside the is-installed guard, so it runs exactly once — on first install — and never duplicates on restart. An evaluator may well ask why that call isn't guarded separately.
+
+docker exec wordpress cat /var/log/php8.2-fpm.log
