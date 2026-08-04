@@ -61,7 +61,6 @@ pm.max_spare_servers = 3
 
 INITIALIZATION.SH:
 #!/bin/bash
-#!/bin/bash
 
 # The script must put files in place, generate a config that didn't exist
 # at build time (it contains a password that only exists at runtime),
