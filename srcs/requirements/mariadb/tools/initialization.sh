@@ -26,22 +26,31 @@ chown -R mysql:mysql /run/mysqld
 chown -R mysql:mysql /var/lib/mysql
 
 # --- First-run initialisation -------------------------------------------
-# /var/lib/mysql/mysql is the system schema. Its absence means this volume
-# has never been initialised — i.e. this is a genuinely fresh install.
-# On every subsequent start this block is skipped and existing data is
-# left untouched. That is what makes the persistence check pass.
+# Two separate guards, because these two steps can fail independently.
+# Guarding both on one condition means a failure in the second step leaves
+# a datadir that passes the guard forever and is never seeded.
+
+# /var/lib/mysql/mysql is the system schema. Its absence means the datadir
+# has never been laid down.
 if [ ! -d /var/lib/mysql/mysql ]; then
     mariadb-install-db --user=mysql --datadir=/var/lib/mysql
+fi
 
-    # --bootstrap: mysqld reads SQL from stdin, applies it, exits. Single-user
-    # mode, no networking, no daemon — this is how the datadir is seeded
-    # without ever starting the server in the background.
+# Own flag file, written only after the SQL has actually applied.
+# --bootstrap: mysqld reads SQL from stdin, applies it, exits. Single-user
+# mode, no networking, no daemon.
+# --bootstrap implies --skip-grant-tables, so account statements are
+    # rejected with error 1290. FLUSH PRIVILEGES loads the grant tables into
+    # memory and re-enables privilege checking for the rest of this batch.
+if [ ! -f /var/lib/mysql/.inception_seeded ]; then
     mysqld --bootstrap <<EOF
+FLUSH PRIVILEGES;
 CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
 CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
 EOF
+    touch /var/lib/mysql/.inception_seeded
 fi
 
 # --- Hand over -----------------------------------------------------------

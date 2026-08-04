@@ -98,3 +98,7 @@ The master doesn't serve any traffic. It binds the ports, reads the config, and 
 - Buld context is different from: The container's filesystem root is /, and it comes from the base image. COPY destination paths are resolved relative to that.
 
 - php-fpm is a process manager. It doesn't handle one request at a time — it keeps a group of worker processes alive and hands incoming FastCGI requests to whichever one is free. That group is called a pool.
+
+why the Makefile creates directories at all, when Docker "manages" the volume. Your answer: the subject mandates the data live under /home/afontele/data, and the only way to satisfy that with a named volume is driver_opts with o: bind — which requires the target path to pre-exist. The mkdir -p in the Makefile is what makes make reproducible from a clean clone. That's a genuinely good answer and this failure is the evidence for it.
+
+"the container is disposable; the datadir is a named volume bound to a host path, and the entrypoint's guards detect an already-initialised datadir and skip seeding, so existing data is never touched."
