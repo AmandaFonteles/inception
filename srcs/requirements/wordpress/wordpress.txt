@@ -9,12 +9,13 @@ FROM debian:bookworm
 # php-cli         : provides /usr/bin/php — WP-CLI is a PHP script and cannot run without it
 # php-mysql       : the driver PHP uses to talk to MariaDB
 # mariadb-client  : provides mariadb-admin, used by the entrypoint to test if the DB is up
-RUN apt-get update && apt-get install -y wget\
-php8.2-fpm\
-php8.2-cli\
-php8.2-mysql\
-mariadb-client\
-&& rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	wget \
+	php8.2-fpm \
+	php8.2-cli \
+	php8.2-mysql \
+	mariadb-client \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Download, unpack to staging, delete the archive.
 # -P is where wget saves it, -C is where tar unpacks it.
