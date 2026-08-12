@@ -106,3 +106,10 @@ why the Makefile creates directories at all, when Docker "manages" the volume. Y
 the second user exists because wp core install creates only the administrator. The wp user create call in your entrypoint sits inside the is-installed guard, so it runs exactly once — on first install — and never duplicates on restart. An evaluator may well ask why that call isn't guarded separately.
 
 docker exec wordpress cat /var/log/php8.2-fpm.log
+
+This strict separation of services has several advantages. First, it allows a better distribution of responsibilities: each container has one precise role. Then, it makes the project easier to maintain, because each service can be observed, modified or restarted independently from the others. Finally, it also improves security, because the services are not mixed in the same environment.
+
+A Docker network allows containers of the same project to communicate together inside an internal network created by Docker. In this case, the services can talk to each other by using their service names, like "wordpress" or "mariadb", without exposing every service directly to the host machine. This helps to keep a better separation between the project and the host environment and to have a safier infrastructure
+
+A Docker volume is a persistent storage managed by Docker. It is made to keep data even if containers are stopped or recreated. 
+The main difference is that Docker volumes are more integrated in Docker logic, while bind mounts depend more directly on the host filesystem. A classic Docker volume is easier to manage through Docker itself, but sometimes you don't know exactly where the data is stored on the host while a bind mount gives more direct control on the host path, but it is more dependent on the host machine structure.
