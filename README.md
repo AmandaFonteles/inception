@@ -32,12 +32,12 @@ at all: NGINX has no `listen 80` directive and port 80 is not published.
 Full setup from a clean clone is in **DEV_DOC.md**. Day-to-day usage is in
 **USER_DOC.md**. The short version:
 
-make # create host data dirs, build the images, start the stack
-make down # stop and remove the containers
-make ps # show container state
-make logs # show service logs
-make fclean # remove containers, volumes, images, and the host data dirs
-make re # fclean followed by a full rebuild
+- make — create host data dirs, build the images, start the stack
+- make down — stop and remove the containers
+- make ps — show container state
+- make logs — show service logs
+- make fclean — remove containers, volumes, images, and the host data dirs
+- make re — fclean followed by a full rebuild
 
 Prerequisites that live on the host, not in this repository, and must exist
 before `make` will work:
