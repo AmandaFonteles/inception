@@ -168,9 +168,9 @@ first.
 
 ### Use of AI
 
-I used Claude as a tutor throughout, in a question-and-answer mode rather than
-a generate-and-paste mode.
+AI was used as a helper tool, in a question-and-answer mode:
 
-I did not use AI-generated content I could not explain. Every directive in
-every file in this repository is one I can justify, which is the standard I
-held myself to while writing them.
+- correcting English documentation
+- finding relevant sources
+- providing detailed explanation
+- reviewing specific parts of code and helping with debug
