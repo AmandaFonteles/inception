@@ -101,7 +101,7 @@ container exits and the restart policy retries the whole thing.
 
 ### Virtual Machines vs Docker
 
-A VM virtualizes hardware and boots its own kernel: a whole second computer.
+A VM virtualizes hardware and boots its own kernel.
 A container is an isolated process sharing the host kernel. That makes
 containers far cheaper to start and to ship, at the cost of weaker isolation —
 a container cannot run a different kernel from its host. This project uses

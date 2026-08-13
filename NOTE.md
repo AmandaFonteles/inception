@@ -86,7 +86,13 @@ NOTES:
 	- HTML is a static file NGINX can send directly. PHP is code that must be executed, and NGINX has no PHP interpreter, so it forwards the request over FastCGI to php-fpm, which runs the code and returns the generated HTML for NGINX to relay back."
 - how does NGINX know what to forward?
 	- because you told it to, in the config. 
-- KEY: To speak HTTPS, NGINX needs a certificate and a private key. Since login.42.fr isn't a real registered domain, you can't get a certificate from a real authority — you'll generate a self-signed one yourself (the tool for this is OpenSSL). The browser will warn that it's untrusted, and that's expected and fine for this project.
+
+
+
+- (USE ON README OR DOCS)KEY: To speak HTTPS, NGINX needs a certificate and a private key. Since login.42.fr isn't a real registered domain, you can't get a certificate from a real authority — you'll generate a self-signed one yourself (the tool for this is OpenSSL). The browser will warn that it's untrusted, and that's expected and fine for this project.
+
+
+
 - nginx doesn't run as one program. When it starts, you get:
 	- one master process, running as root
 	- several worker processes, running as www-data
@@ -113,3 +119,5 @@ A Docker network allows containers of the same project to communicate together i
 
 A Docker volume is a persistent storage managed by Docker. It is made to keep data even if containers are stopped or recreated. 
 The main difference is that Docker volumes are more integrated in Docker logic, while bind mounts depend more directly on the host filesystem. A classic Docker volume is easier to manage through Docker itself, but sometimes you don't know exactly where the data is stored on the host while a bind mount gives more direct control on the host path, but it is more dependent on the host machine structure.
+
+- (USE ON README OR DOCS)KEY: To speak HTTPS, NGINX needs a certificate and a private key. Since login.42.fr isn't a real registered domain, you can't get a certificate from a real authority — you'll generate a self-signed one yourself (the tool for this is OpenSSL). The browser will warn that it's untrusted, and that's expected and fine for this project.
