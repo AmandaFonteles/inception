@@ -23,6 +23,6 @@ bind-address    = 0.0.0.0
 # Compare hosts as raw IPs only. (Using the user+host records takes more time)
 skip-name-resolve
 
-# Full 4-byte UTF-8, so WordPress content can hold emoji and non-Latin text.
+# Full 4-byte UTF-8, so WordPress content can hold emoji and non-ascii text.
 character-set-server  = utf8mb4
 collation-server      = utf8mb4_unicode_ci
