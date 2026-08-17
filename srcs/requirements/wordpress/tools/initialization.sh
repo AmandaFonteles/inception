@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# The script must put files in place, generate a config that didn't exist
-# at build time (it contains a password that only exists at runtime),
-# install WordPress into the database, and then become php-fpm.
 # Runs as root: it has to write into the volume and
 # chown it, then hands the process over to php-fpm.
 
@@ -11,24 +8,16 @@
 # -o pipefail  a pipeline fails if any stage fails, not just the last
 set -euo pipefail
 
-# --- Secrets -------------------------------------------------------------
-# Docker mounts each granted secret as a read-only file at
-# /run/secrets/<declared-name>. Never an environment variable.
 DB_PASSWORD="$(cat /run/secrets/db_password)"
 WP_ADMIN_PASSWORD="$(cat /run/secrets/wp_adm_password)"
 WP_USER_PASSWORD="$(cat /run/secrets/wp_user_password)"
 
-# --- WordPress files -----------------------------------------------------
-# /var/www/html is the volume. On first run it is empty, because a volume
-# mounted over an image path hides whatever the image had there. The files
-# were unpacked at build time to /var/www/wordpress, which no volume covers.
 # wp-settings.php is a core file: its absence proves the volume is unpopulated.
 if [ ! -f /var/www/html/wp-settings.php ]; then
-	# The trailing /. copies the *contents* of the directory, dotfiles included.
+	# The trailing /. copies the contents of the directory, dotfiles included.
 	cp -r /var/www/wordpress/. /var/www/html/
 fi
 
-# --- Wait for MariaDB ----------------------------------------------------
 # depends_on only waits for the container to start, not for mysqld to accept
 # connections. Bounded to 30 attempts: no infinite loop, and if the database
 # is genuinely down this container exits and Docker restarts it.
@@ -46,9 +35,6 @@ if [ "${DB_READY}" -eq 0 ]; then
 	exit 1
 fi
 
-# --- wp-config.php -------------------------------------------------------
-# Generated here, not at build time, because it contains the database
-# password, which only exists at runtime as a mounted secret.
 if [ ! -f /var/www/html/wp-config.php ]; then
 	wp config create \
 		--path=/var/www/html \
@@ -59,7 +45,6 @@ if [ ! -f /var/www/html/wp-config.php ]; then
 		--allow-root
 fi
 
-# --- Install WordPress ---------------------------------------------------
 # Guarded on the database, not on a file: the tables live in the mariadb
 # volume, so this can be false even when the files are already in place.
 if ! wp core is-installed --path=/var/www/html --allow-root; then
@@ -73,8 +58,6 @@ if ! wp core is-installed --path=/var/www/html --allow-root; then
 		--skip-email \
 		--allow-root
 
-	# Second, non-administrator user. The subject requires two users in the
-	# database, only one of them the administrator.
 	wp user create "${WP_USER}" "${WP_USER_EMAIL}" \
 		--role=author \
 		--user_pass="${WP_USER_PASSWORD}" \
@@ -82,13 +65,8 @@ if ! wp core is-installed --path=/var/www/html --allow-root; then
 		--allow-root
 fi
 
-# --- Ownership -----------------------------------------------------------
-# Last, so it also covers wp-config.php and anything else wp-cli wrote as
-# root. www-data is the pool user in www.conf; without this, PHP cannot
-# write to the site (no uploads, no plugin installs).
 chown -R www-data:www-data /var/www/html
 
-# --- Hand over -----------------------------------------------------------
 # -F (--nodaemonize) keeps php-fpm in the foreground. Without it php-fpm
 # forks, the parent exits, and the container stops immediately.
 # exec replaces this shell, so php-fpm becomes PID 1 and receives SIGTERM
