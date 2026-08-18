@@ -234,8 +234,7 @@ docker images
 
 Three images, all tagged `:inception` — `mariadb:inception`,
 `wordpress:inception`, `nginx:inception`. The tag is deliberate: it proves the
-images are built locally, since no such tag exists on Docker Hub. `latest` is
-never used, explicitly or implicitly.
+images are built locally, since no such tag exists on Docker Hub.
 
 ### Volumes
 
