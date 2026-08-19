@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y mariadb-server && rm -rf /var/lib/apt/l
 COPY conf/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
 
 # Entrypoint script. Copied into /usr/local/bin because that is the
-# conventional location for locally-installed executables and is on PATH.
+# conventional location for localy-installed executables and is on PATH.
 COPY tools/initialization.sh /usr/local/bin/initialization.sh
 
 RUN chmod +x /usr/local/bin/initialization.sh

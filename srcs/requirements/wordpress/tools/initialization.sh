@@ -23,6 +23,8 @@ fi
 # is genuinely down this container exits and Docker restarts it.
 DB_READY=0
 for i in $(seq 30); do
+	# mariadb client connection test: it uses mariadb_client to try
+	# to connect to amke sure mariadb is accepting connections
 	if mariadb -h mariadb -u "${MYSQL_USER}" -p"${DB_PASSWORD}" -e "SELECT 1;" > /dev/null 2>&1; then
 		DB_READY=1
 		break
@@ -35,6 +37,7 @@ if [ "${DB_READY}" -eq 0 ]; then
 	exit 1
 fi
 
+# config of the connection between mariadb and wordpress
 if [ ! -f /var/www/html/wp-config.php ]; then
 	wp config create \
 		--path=/var/www/html \
@@ -45,8 +48,8 @@ if [ ! -f /var/www/html/wp-config.php ]; then
 		--allow-root
 fi
 
-# Guarded on the database, not on a file: the tables live in the mariadb
-# volume, so this can be false even when the files are already in place.
+# check if wordpress is already installed and config of wordpress is already done
+#  if not we install and config wordpress and create the second user
 if ! wp core is-installed --path=/var/www/html --allow-root; then
 	wp core install \
 		--path=/var/www/html \

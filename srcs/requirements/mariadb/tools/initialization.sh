@@ -7,7 +7,7 @@
 # -o pipefail  a pipeline fails if any stage fails, not just the last
 set -euo pipefail
 
-# time. $( ) strips the trailing newline if the host file has one.
+# $( ) strips the trailing newline if the host file has one.
 DB_ROOT_PASSWORD="$(cat /run/secrets/db_root_password)"
 DB_PASSWORD="$(cat /run/secrets/db_password)"
 
