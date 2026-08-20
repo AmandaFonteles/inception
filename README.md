@@ -55,7 +55,7 @@ DEV_DOC.md walks through each one.
 
 ### Use of Docker
 
-Each service runs as one process in one container, built from a Dockerfile in
+Each service runs in one container, built from a Dockerfile in
 `srcs/requirements/<service>/`. Compose builds all three, wires them onto a
 shared network, attaches the volumes, and injects the secrets. The Makefile
 never calls `docker` directly for the services — it calls `docker compose`,
@@ -175,7 +175,7 @@ always know where its data actually sits on the host. A bind mount gives
 direct control over the host path, at the price of depending much more on the
 structure of the host machine.
 
-The subject asks for both at once: named volumes, with the data landing in
+The subject asks for named volumes, with the data landing in
 `/home/afontele/data`. I get that by passing `driver_opts` to the default
 `local` driver — `type: none`, `o: bind`, `device: /home/afontele/data/<service>`
 — so the driver reaches the host path I chose. The bind is the plumbing; the

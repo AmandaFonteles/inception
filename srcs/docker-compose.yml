@@ -6,7 +6,7 @@ services:
   mariadb:
     # image
     build: ./requirements/mariadb
-    image: mariadb:inception # name:tag
+    image: mariadb
     
     # identity and lifecycle
     container_name: mariadb
@@ -31,7 +31,7 @@ services:
   wordpress:
         # image
     build: ./requirements/wordpress
-    image: wordpress:inception # name:tag
+    image: wordpress
     
     # identity and lifecycle
     container_name: wordpress
@@ -58,7 +58,7 @@ services:
   nginx:
     # image
     build: ./requirements/nginx
-    image: nginx:inception # name:tag (tag - version of the image)
+    image: nginx
     
     # identity and lifecycle
     container_name: nginx
