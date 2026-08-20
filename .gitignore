@@ -1,5 +1,0 @@
-# Passwords. Created locally per DEV_DOC.md, never committed.
-secrets/*.txt
-
-# Keep the directory itself visible in the tree.
-!secrets/.gitkeep
