@@ -25,7 +25,7 @@ DB_READY=0
 for i in $(seq 30); do
 	# mariadb client connection test: it uses mariadb_client to try
 	# to connect to amke sure mariadb is accepting connections
-	if mariadb -h mariadb -u "${MYSQL_USER}" -p"${DB_PASSWORD}" -e "SELECT 1;" > /dev/null 2>&1; then
+	if mariadb -h mariadb -P 3306 -u "${MYSQL_USER}" -p"${DB_PASSWORD}" -e "SELECT 1;" > /dev/null 2>&1; then
 		DB_READY=1
 		break
 	fi
