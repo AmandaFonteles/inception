@@ -102,11 +102,6 @@ Docker mounts each granted secret as a read-only file inside the container,
 under `/run/secrets/`. They are never environment variables, so they do not
 appear in `docker inspect` or in any process environment.
 
-```bash
-docker exec mariadb ls -l /run/secrets/
-docker exec wordpress ls -l /run/secrets/
-```
-
 `mariadb` receives `db_root_password` and `db_password`. `wordpress` receives
 `db_password`, `wp_adm_password`, and `wp_user_password`. `nginx` receives
 none — it holds no credential of any kind.
@@ -146,9 +141,9 @@ check its logs.
 ### The right process is PID 1
 
 ```bash
-docker exec mariadb ps -o pid,cmd -p 1
-docker exec wordpress ps -o pid,cmd -p 1
-docker exec nginx ps -o pid,cmd -p 1
+docker exec nginx cat /proc/1/comm
+docker exec wordpress cat /proc/1/comm
+docker exec mariadb cat /proc/1/comm
 ```
 
 Expect `mysqld`, `php-fpm: master process`, and `nginx -g daemon off;`
@@ -167,9 +162,9 @@ curl -I  http://afontele.42.fr         # expect a connection failure
 Protocol versions:
 
 ```bash
-openssl s_client -connect afontele.42.fr:443 -tls1_2 </dev/null
-openssl s_client -connect afontele.42.fr:443 -tls1_3 </dev/null
-openssl s_client -connect afontele.42.fr:443 -tls1   </dev/null
+curl -Ik -tlsv1.1 --tls-max 1.1 https://afontele.42.fr
+curl -Ik -tlsv1.2 --tls-max 1.2 https://afontele.42.fr
+curl -Ik -tlsv1.3 --tls-max 1.3 https://afontele.42.fr
 ```
 
 The first two complete a handshake and print the certificate. The third fails.
