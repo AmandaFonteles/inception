@@ -18,14 +18,6 @@ that runs VirtualBox.
 | `make` | Not installed by default on a minimal Debian. `make` is the required entry point of the project, so without it nothing starts. |
 | `git` | To clone the repository. |
 
-`make` is genuinely missing on a fresh Debian install — this is not a
-theoretical prerequisite:
-
-```bash
-sudo apt update
-sudo apt install make
-```
-
 Docker Engine is installed from Docker's own apt repository, not from the
 `docker.io` Debian package, so that `docker compose` v2 is available.
 Follow the official instructions:
@@ -86,15 +78,14 @@ have to be created by hand before the first build. Both are gitignored, and
 ### 2.1 The environment file
 
 ```bash
-cp srcs/.env.example srcs/.env
+cp Documents/.env inception/srcs/.env
 ```
 
 `srcs/.env` holds non-secret configuration only: the domain name, the database
 name, the database user, the two WordPress usernames and emails, and the site
 title. It contains no password.
 
-The committed `.env.example` already carries working values for this project,
-so the copy is usually enough. Edit `srcs/.env` if you are deploying under a
+Edit `srcs/.env` if you are deploying under a
 different login or domain — and if you change `DOMAIN_NAME`, change it in
 three other places too: `server_name` in `srcs/requirements/nginx/conf/nginx.conf`,
 the `-subj` and `-addext` arguments of the `openssl` command in the NGINX
@@ -145,7 +136,7 @@ git status --short
 ```
 
 The first command must print a matching `.gitignore` rule for each path. The
-second must not list `.env`, any `secrets/*.txt`, or `NOTES.md`.
+second must not list `.env` or any `secrets/*.txt`.
 
 ## 3. Build and launch
 
@@ -229,12 +220,8 @@ package, which these images do not all install.
 ### Images
 
 ```bash
-docker images
+make ps
 ```
-
-Three images, all tagged `:inception` — `mariadb:inception`,
-`wordpress:inception`, `nginx:inception`. The tag is deliberate: it proves the
-images are built locally, since no such tag exists on Docker Hub.
 
 ### Volumes
 
@@ -334,17 +321,6 @@ cd inception && make
 The site must come back with the change still there, and the logs must show
 no re-seeding.
 
-### Backup and restore
-
-The data is plain files on the host, so a backup is a copy:
-
-```bash
-sudo tar czf ~/inception-backup.tar.gz -C /home/afontele/data .
-```
-
-`sudo` for the same reason as `fclean`: the MariaDB files belong to the
-container's `mysql` user. Restore by stopping the stack, extracting into the
-same location, and starting again.
 
 ## 6. Changing a service's configuration
 
