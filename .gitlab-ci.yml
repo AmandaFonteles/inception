@@ -1,0 +1,10 @@
+stages:
+  - lint
+
+hello:
+  stage: lint
+  image: debian:bookworm
+  script:
+    - echo "Pipeline $CI_PIPELINE_ID, commit $CI_COMMIT_SHORT_SHA"
+    - ls -la
+    - test ! -e secrets
