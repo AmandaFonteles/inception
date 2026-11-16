@@ -1,0 +1,5 @@
+# The Dockerfile itself never needs to be inside the build context payload.
+Dockerfile
+.dockerignore
+*.md
+*.txt

@@ -1,0 +1,28 @@
+# 50-server.cnf — read only by the MariaDB server, not by clients.
+
+[mysqld]
+
+# Drop privileges to the unprivileged mysql user after startup.
+user            = mysql
+
+# Mount point of the MariaDB volume.
+# Everything written here survives docker compose down and a VM reboot.
+datadir         = /var/lib/mysql
+
+# socket path to connect with mariadb client
+socket          = /run/mysqld/mysqld.sock
+
+# sets the path to the pid files. Without it, every docker up will create a new one
+pid-file        = /run/mysqld/mysqld.pid
+
+port            = 3306
+
+# No published port, so the only clients that can reach 3306 are containers on the `inception` network.
+bind-address    = 0.0.0.0
+
+# Compare hosts as raw IPs only. (Using the user+host records takes more time)
+skip-name-resolve
+
+# Full 4-byte UTF-8, so WordPress content can hold emoji and non-ascii text.
+character-set-server  = utf8mb4
+collation-server      = utf8mb4_unicode_ci
